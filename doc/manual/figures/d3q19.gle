@@ -1,0 +1,285 @@
+size 11 11
+set font texcmmi
+
+
+! angles for point of view
+! rotates xy plane around z
+proj_phi=20
+
+! tilts the rotated system ( as if we climb up in z-direction 
+! and look from above onto the xy-plane
+proj_theta=35
+
+! the distance from which we are looking. Set this to zero for
+! parallel projection, set it to some value larger than the largest distance
+! of object to the origin
+dist=50
+
+
+! Arrow length
+arrow_l=3
+
+! parametrization steps for 3d arcs (in degrees)
+arcstep=1.0
+
+! constants for the projection
+
+A1=sin(torad(proj_phi))
+A2=cos(torad(proj_phi))
+
+B1=sin(torad(proj_theta))
+B2=cos(torad(proj_theta))
+
+
+! This subroutine takes in the 3d coordinates and gives the projected
+! 2d coords as x_render and y_render. z_render contains the depth 
+! of a point with respect to the drawing plane
+x_render=0
+y_render=0
+z_render=0
+sub render x y z
+z_render=-B1*z-B2*A1*x+B2*A2*y
+! perspectivic distorsion factor (equal to 1 in case of parallel projection):
+perspect=dist/(dist+z_render)
+if dist=0 then
+  perspect=1
+end if
+x_render=(A2*x+A1*y)*perspect
+y_render=(B2*z-B1*A1*x+B1*A2*y)*perspect
+end sub
+
+! amove, aline, rmore, rline in projected space:
+sub pamove x y z
+@render x y z
+amove x_render y_render
+end sub
+
+sub prmove x y z
+@render x y z
+rmove x_render y_render
+end sub
+
+sub paline x y z
+@render x y z
+aline x_render y_render
+end sub
+
+sub paline_dotted x y z
+@render x y z
+set lstyle 2
+aline x_render y_render
+set lstyle 1
+end sub
+
+x=0
+y=0
+z=0
+sub cartesian r theta phi
+x=r*cos(torad(phi))*cos(torad(theta))
+y=r*sin(torad(phi))*cos(torad(theta))
+z=r*sin(torad(theta))
+end sub
+
+sub parc xc yc zc x1 y1 z1 x2 y2 z2 degstart degend 
+xn=xc+x1*cos(torad(degstart))+x2*sin(torad(degstart)) 
+yn=yc+y1*cos(torad(degstart))+y2*sin(torad(degstart)) 
+zn=zc+z1*cos(torad(degstart))+z2*sin(torad(degstart))
+@pamove xn yn zn 
+for angle = degstart to degend step arcstep
+xn=xc+x1*cos(torad(angle))+x2*sin(torad(angle)) 
+yn=yc+y1*cos(torad(angle))+y2*sin(torad(angle)) 
+zn=zc+z1*cos(torad(angle))+z2*sin(torad(angle))
+@paline xn yn zn 
+next angle
+end sub 
+
+sub parc_dotted xc yc zc x1 y1 z1 x2 y2 z2 degstart degend
+xn=xc+x1*cos(torad(degstart))+x2*sin(torad(degstart)) 
+yn=yc+y1*cos(torad(degstart))+y2*sin(torad(degstart)) 
+zn=zc+z1*cos(torad(degstart))+z2*sin(torad(degstart))
+@pamove xn yn zn 
+set lstyle 2
+for angle = degstart to degend step arcstep
+xn=xc+x1*cos(torad(angle))+x2*sin(torad(angle)) 
+yn=yc+y1*cos(torad(angle))+y2*sin(torad(angle)) 
+zn=zc+z1*cos(torad(angle))+z2*sin(torad(angle))
+@paline xn yn zn 
+next angle
+set lstyle 1
+end sub 
+
+
+sub prline x y z
+@render x y z
+rline x_render y_render
+end sub
+
+sub paline_arrow x y z
+@render x y z
+aline x_render y_render arrow end
+end sub
+
+sub prline_arrow x y z
+@render x y z
+rline x_render y_render arrow end
+end sub
+
+sub offtext dx dy  t$
+aa=xpos()
+bb=ypos()
+rmove dx dy 
+write t$
+amove aa bb 
+end sub
+
+! Now let's start drawing!
+
+
+amove 6 6
+begin origin
+
+!------------------------------------
+! First of all, let's do the axes
+
+set hei 0.5
+
+
+@pamove -2 -8 0
+@prline_arrow 2 0 0
+@offtext 0.2 0.1  "\tex{$x$}"
+
+@pamove -2 -8 0
+@prline_arrow 0 2 0 
+@offtext 0.1 0.2  "\tex{$y$}"
+
+@pamove -2 -8 0
+@prline_arrow 0 0 2 
+@offtext 0.1 0.2  "\tex{$z$}"
+
+
+!-----------------------------------
+
+@pamove 0 0 0
+@paline_arrow arrow_l 0 0
+@offtext 0.2 -0.1  "\tex{$\mathbf{c}_{1}$}"
+
+@pamove 0 0 0
+@paline_arrow -arrow_l 0 0
+@offtext -0.6 0  "\tex{$\mathbf{c}_{2}$}"
+
+@pamove 0 0 0
+@paline_arrow 0 arrow_l 0
+@offtext 0.1 0.1  "\tex{$\mathbf{c}_{3}$}"
+
+@pamove 0 0 0
+@paline_arrow 0 -arrow_l 0 
+@offtext -0.6 -0.2 "\tex{$\mathbf{c}_{4}$}"
+
+@pamove 0 0 0
+@paline_arrow 0 0 arrow_l
+@offtext -0.4 0.2  "\tex{$\mathbf{c}_{5}$}"
+
+@pamove 0 0 0
+@paline_arrow 0 0 -arrow_l 
+@offtext 0 -0.35  "\tex{$\mathbf{c}_{6}$}"
+
+@pamove 0 0 0
+@paline_arrow arrow_l arrow_l 0
+@offtext 0.1 -0.1  "\tex{$\mathbf{c}_{7}$}"
+
+@pamove 0 0 0
+@paline_arrow arrow_l -arrow_l 0
+@offtext -0.5 -0.25 "\tex{$\mathbf{c}_{8}$}"
+
+@pamove 0 0 0
+@paline_arrow arrow_l 0 arrow_l
+@offtext 0.1 -0.2  "\tex{$\mathbf{c}_{9}$}"
+
+@pamove 0 0 0
+@paline_arrow arrow_l 0 -arrow_l
+@offtext 0.1 -0.1  "\tex{$\mathbf{c}_{10}$}"
+
+@pamove 0 0 0
+@paline_arrow -arrow_l arrow_l 0
+@offtext 0.1 0.1 "\tex{$\mathbf{c}_{11}$}"
+
+@pamove 0 0 0
+@paline_arrow -arrow_l -arrow_l 0
+@offtext -0.7 0  "\tex{$\mathbf{c}_{12}$}"
+
+@pamove 0 0 0
+@paline_arrow -arrow_l 0 arrow_l
+@offtext -0.7 0.2  "\tex{$\mathbf{c}_{13}$}"
+
+@pamove 0 0 0
+@paline_arrow -arrow_l 0 -arrow_l
+@offtext -0.75 -0.1  "\tex{$\mathbf{c}_{14}$}"
+
+@pamove 0 0 0
+@paline_arrow 0 arrow_l arrow_l
+@offtext 0.1 0.1  "\tex{$\mathbf{c}_{15}$}"
+
+@pamove 0 0 0
+@paline_arrow 0 arrow_l -arrow_l
+@offtext 0.15 0  "\tex{$\mathbf{c}_{16}$}"
+
+@pamove 0 0 0
+@paline_arrow 0 -arrow_l arrow_l
+@offtext -0.7 -0.2  "\tex{$\mathbf{c}_{17}$}"
+
+@pamove 0 0 0
+@paline_arrow 0 -arrow_l -arrow_l
+@offtext -0.1 -0.4  "\tex{$\mathbf{c}_{18}$}"
+
+@pamove 0 0 0
+@offtext 0.7 -0.1  "\tex{$\mathbf{c}_{19}$}"
+
+! -----------------------------------
+! dotted planes
+
+@pamove arrow_l arrow_l 0
+@paline_dotted arrow_l -arrow_l 0
+@paline_dotted -arrow_l -arrow_l 0
+@paline_dotted -arrow_l arrow_l 0
+@paline_dotted arrow_l arrow_l 0
+
+
+@pamove 0 arrow_l arrow_l 
+@paline_dotted 0 arrow_l -arrow_l 
+@paline_dotted 0 -arrow_l -arrow_l 
+@paline_dotted 0 -arrow_l arrow_l 
+@paline_dotted 0 arrow_l arrow_l 
+
+@pamove arrow_l 0 arrow_l 
+@paline_dotted arrow_l 0 -arrow_l 
+@paline_dotted -arrow_l 0 -arrow_l 
+@paline_dotted -arrow_l 0 arrow_l 
+@paline_dotted arrow_l 0 arrow_l 
+
+
+
+@pamove arrow_l arrow_l arrow_l
+@paline_dotted arrow_l -arrow_l arrow_l
+@paline_dotted -arrow_l -arrow_l arrow_l
+@paline_dotted -arrow_l arrow_l arrow_l
+@paline_dotted arrow_l arrow_l arrow_l
+
+@pamove arrow_l arrow_l -arrow_l
+@paline_dotted arrow_l -arrow_l -arrow_l
+@paline_dotted -arrow_l -arrow_l -arrow_l
+@paline_dotted -arrow_l arrow_l -arrow_l
+@paline_dotted arrow_l arrow_l -arrow_l
+
+@pamove arrow_l arrow_l -arrow_l
+@paline_dotted arrow_l arrow_l arrow_l
+
+@pamove -arrow_l arrow_l -arrow_l
+@paline_dotted -arrow_l arrow_l arrow_l
+
+@pamove arrow_l -arrow_l -arrow_l
+@paline_dotted arrow_l -arrow_l arrow_l
+
+@pamove -arrow_l -arrow_l -arrow_l
+@paline_dotted -arrow_l -arrow_l arrow_l
+
+end origin

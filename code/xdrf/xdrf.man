@@ -1,0 +1,329 @@
+.TH XDRF 3
+
+.SH NAME
+xdrf \- portable data compression library
+
+.SH DESCRIPTION
+ 
+This collection of routines is intended to write and read 
+data in a portable way to a file, so that data written on 
+one type of machine can be read back on a different type.
+There is a section for C users and one for FORTRAN users.
+
+.SH "C USERS ONLY:"
+
+For writing data other than compressed coordinates you 
+should use the standard C xdr routines (see xdr man
+page), but if you plan to use xdr3dfcoord(), you
+\fImust\fR inititialize the XDR stream with xdropen(),
+and close it with xdrclose().
+.br
+#include "xdrf.h"
+.br
+Depending on your operating system you should also include
+.br
+.br
+#include <rpc/rpc.h>
+.br
+#include <rpc/xdr.h>
+.br
+.br
+.SS "int xdropen(XDR *xdrs, const char *filename, const char *mode)"
+This will open the file with the given \fIfilename\fR and the 
+given mode. You should pass it an allocated XDR struct
+in \fIxdrs\fR, to be used in all other calls to xdr routines.
+\fIMode\fR is 'w' to create, or update an file, and for all 
+other values of mode the file is opened for reading. 
+You need to call xdrclose to flush the output and close
+the file.
+.br
+Note that you should not use xdrstdio_create, which
+comes with the standard xdr library.
+
+.SS "int xdrclose(XDR *xdrs)"
+Flush the data to the file, and close the file;
+You should not use xdr_destroy (which comes standard
+with the xdr libraries).
+ 
+.SS "int xdr3dfcoord(XDR *xdrs, float *fp, int *size, float *precision)"
+This is \fInot\fR a standard xdr routine. I named it this 
+way, because it invites people to use the other xdr 
+routines.
+.br
+It is introduced to store specifically 3d coordinates of 
+molecules (as found in molecular dynamics) and it writes 
+them in a compressed format.
+It starts by multiplying all numbers by \fI*precision\fR and
+rounding the results to integers, effectively converting
+all floating point numbers to fixed point. If you use a 
+small number for precision, the compression is better.
+It uses an algorithm for compression that is optimized 
+for molecular data, but could be used for other 3d coordinates
+as well. There are subtantial overheads involved, 
+so call this routine only if you have a large number of 
+coordinates to read/write.
+.br
+\fI*size\fR should be the number of coordinate triplets. On read
+from a file it can either be zero, or it should match the
+number used while writing.
+\fIfp\fR points to the coordinates which are stored in
+the order x0, y0, z0, x1, y1, z1, etc.
+
+
+.SH "FORTRAN USERS ONLY:"
+
+All FORTRAN routines use an integer 'xdrid', which is an id
+to the current xdr file, and is set by xdrfopen. Most 
+routines have in integer 'ret' which is the return value.
+The value of 'ret' is zero on failure, and most of the time 
+one on success.
+
+.SS     xdrfopen(xdrid, filename, mode, ret)
+.B integer xdrid
+.br
+.B character *(*) filename
+.br
+.B character *(*) mode
+.br
+.B integer ret
+.br
+This will open the file with the given filename (string)
+and the given mode. It returns an id in xdrid, which is
+to be used in all other calls to xdrf routines.
+Mode is 'w' to create, or update an file, and for all 
+other values of mode the file is opened for reading.
+You need to call xdrfclose to flush the output and close
+the file.
+.br
+Note that you should not use xdrstdio_create, which comes 
+with the standard xdr library.
+
+.SS "xdrfclose(xdrid, ret)"
+.B integer xdrid
+.br
+.B integer ret
+.br
+Flush the data to the file, and close the file;
+You should not use xdr_destroy (which comes standard with
+the xdr libraries.
+ 
+.SS "xdrfbool(xdrid, bp, ret)"
+.B integer xdrid
+.br
+.B integer pb
+.br 
+.B integer ret
+.br
+This filter produces values of either 1 or 0.	
+ 
+.SS "xdrfchar(xdrid, cp, ret)"
+.B integer xdrid
+.br
+.B character cp
+.br
+.B integer ret
+.br
+Filter that translate between characters and their xdr 
+representation. Note that the characters are not 
+compressed and occupy 4 bytes.
+
+.SS "xdrfdouble(xdrid, dp, ret)"
+.B integer xdrid
+.br
+.B double dp
+.br 
+.B integer ret
+.br
+Read/write a double.
+
+.SS "xdrffloat(xdrid, fp, ret)"
+.B integer xdrid
+.br
+.B float fp
+.br 
+.B integer ret
+.br
+Read/write a float.
+
+.SS "xdrfint(xdrid, ip, ret)"
+.B integer xdrid
+.br
+.B integer ip
+.br
+.B integer ret
+.br
+Read/write integer.
+
+.SS "xdrflong(xdrid, lp, ret)"
+.B integer xdrid
+.br
+.B integer lp
+.br
+.B integer ret
+.br
+This routine has a possible portablility problem due to 
+64 bit longs.
+
+.SS "xdrfshort(xdrid, sp, ret)"
+.B integer xdrid
+.br
+.B integer *2 sp
+.br
+
+.SS "xdrfstring(xdrid, sp, maxsize, ret)"
+.B integer xdrid
+.br
+.B character *(*)
+.br
+.B integer maxsize
+.br
+.B integer ret
+.br
+Read/write a string, with maximum length given by 
+maxsize.
+
+.SS "xdrfwrapstring(xdris, sp, ret)"
+.B integer xdrid
+.br
+.B character *(*)
+.br
+.B integer ret
+.br
+Read/write a string (it is the same as xdrfstring except 
+that it finds the string length itself.
+
+.SS "xdrfvector(xdrid, cp, size, xdrfproc, ret)"
+.B integer xdrid
+.br
+.B character *(*)
+.br
+.B integer size
+.br
+.B external xdrfproc
+.br
+.B integer ret
+.br
+Read/write an array pointed to by cp, with number of 
+elements defined by 'size'. The routine 'xdrfproc' is the 
+name of one of the above routines to read/write data 
+(such as xdrfdouble).
+.br
+In contrast with the C version you don't need to specify 
+the byte size of an element.
+xdrfstring is not allowed here (it is in the C version).
+
+.SS "xdrf3dfcoord(xdrid, fp, size, precision, ret)"
+.B integer xdrid
+.br
+.B real (*) fp
+.br
+.B real precision
+.br
+.B integer size
+.br
+.B integer ret
+.br
+This is \fInot\fR a standard xdr routine. I named it this 
+way, because it invites people to use the other xdr 
+routines.
+.br
+It is introduced to store specifically 3d coordinates of 
+molecules (as found in molecular dynamics) and it writes 
+them in a compressed way.
+.br
+It starts by multiplying all numbers by \fIprecision\fR and
+rounding the result to integer, effectively converting
+all floating point numbers to fixed point. If you use a 
+small number for precision, the compression is better.
+It uses an algorithm for compression that is optimized 
+for molecular data, but could be used for other 3d 
+coordinates as well. There are substantial overheads 
+involved, so call this routine only if you have a large 
+number of coordinates to read/write.
+.br
+\fISize\fR should be the number of coordinate triplets. On read
+from a file it can either be zero, or it should match the
+number used while writing.
+.br
+\fIfp\fR is the array holding the cordinates in the order
+x1, y1, z1, x2, y2, z2, etc
+
+.SH C LANGUAGE EXAMPLE
+Here is an incomplete C program the writes one integer and a
+set of 3d coordinates.
+.br
+.br
+#include <rpc/rpc.h>
+.br
+#include <rpc/xdr.h>
+.br
+#include "xdrf.h"
+
+.br
+int main() {
+.br
+    XDR xd;
+.br
+    float prec = 1000.0;
+.br
+    float coord[3 * 100];
+.br
+    int num_of_coord = 100;
+.br
+    int some_int = 12345;
+.br
+    if (xdropen(&xd, "test.xdr","w") == 0) {
+.br
+       fprintf(stderr,"failed to open file\\n");
+.br
+    }
+.br
+    /* set the values of coord here */
+.br
+    ....
+.br
+
+.br
+    if (xdr_int(&xd, &some_int) == 0) 
+.br
+       fprintf(stderr,"error writing some_int\\n");
+.br
+    if (xdr3dfcoord(&xd, coord, &num_of_coord, &prec) == 0) 
+.br
+       fprintf(stderr,"error writing coordinates\\n");
+.br
+    xdrclose(&xd);
+.br
+}
+.br
+.SH FORTRAN LANGUAGE EXAMPLE
+Below is an incomplete FORTRAN program to read one integer and
+a set of 3d coordinates from a xdr file:
+.br
+.br
+       program xdr_test
+.br
+       integer xd, some_int, num_of_coord, ret
+.br
+       real *4 coord[3*100], prec
+.bl
+       call xdrfopen(xd, "test.xdr", "r", ret)
+.br
+       if (ret.eq.0)
+.br
+           call error
+.br
+       endif
+.br
+       call xdrfint(xd, some_int, ret)
+.br
+       prec = 1000.0
+.br
+       num_of_coord = 0
+.br
+       call xdrf3dfcoord(xd, coord, num_of_coord, prec, ret)
+.br
+       end
+
+.SH "SEE ALSO"
+xdr(3)

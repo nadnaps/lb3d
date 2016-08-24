@@ -1,0 +1,7 @@
+&upscale_input
+seedfile = 'upscale-20.xdr'
+pzero_p = .true.
+seednx = 16
+seedny = 16
+seednz = 16
+/

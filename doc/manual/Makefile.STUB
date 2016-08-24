@@ -1,0 +1,6 @@
+manual:	lb3d-manual.tex authors.tex
+	pdflatex lb3d-manual.tex
+tidy:
+	rm -rf lb3d-manual.aux lb3d-manual.toc lb3d-manual.log 
+clean:
+	rm -rf lb3d-manual.aux lb3d-manual.toc lb3d-manual.log lb3d-manual.pdf

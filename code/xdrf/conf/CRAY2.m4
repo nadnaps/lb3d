@@ -1,0 +1,15 @@
+#include <fortran.h>
+
+undefine(`len')
+define(`FUNCTION',`translit($1,abcdefghijklmnopqrstuvwxyz,ABCDEFGHIJKLMNOPQRSTUVWXYZ)')
+define(`STRING_ARG',`$1_fcd')
+define(`STRING_ARG_DECL',`_fcd $1_fcd')
+define(`STRING_LEN',`_fcdlen($1_fcd)')
+define(`STRING_PTR',`_fcdtocp($1_fcd)')
+define(`ARGS',`($1)')
+define(`INT_KIND_1_DECL',`int *$1')
+define(`INT_KIND_1_CAST',`(int)($1)')
+define(`INT_KIND_1_PTR_CAST',`(int *)($1)')
+define(`INT_KIND_1D0_DECL',`int *$1')
+define(`INT_KIND_1D0_CAST',`(int)($1)')
+define(`INT_KIND_1D0_PTR_CAST',`(int *)($1)')

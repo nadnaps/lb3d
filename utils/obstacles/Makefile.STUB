@@ -1,0 +1,14 @@
+LIBS    = -lm
+
+.c.o:  ; ${CC}  -c ${CFLAGS}  $(LOCALCFLAGS) $(HDF5FLAGS) ${INCL} $*.c 
+
+all:	createRock	
+
+createRock:	createRock.c
+	${CC}  createRock.c -o createRock $(LIBS) $(LOCALCFLAGS)
+
+clean: 
+	rm -f *.o createRock
+
+
+

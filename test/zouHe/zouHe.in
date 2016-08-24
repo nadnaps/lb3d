@@ -1,0 +1,96 @@
+&fixed_input
+nx = 16 
+ny = 16
+nz = 16 
+seed = 1
+obs_file = 'empty.dat'
+boundary_cond = -1 
+/
+
+&variable_input
+
+n_iteration = 10
+n_sci_start = 0
+sci_int = .false.
+n_sci_int = 10
+sci_sur = .true.
+n_sci_sur = 10
+sci_od = .true.
+n_sci_od = 10
+sci_wd = .true.
+n_sci_wd = 10
+sci_dir = .true.
+n_sci_dir = 10
+sci_vel = .true.
+n_sci_vel = 10
+sci_flo = .false.
+n_sci_flo = 10
+sci_arrows = .true.
+n_sci_arrows = 10
+sci_velocities = .false.
+n_sci_velocities = 10
+sci_rock = .false.
+n_sci_rock = 10
+sci_fluxz = .false.
+n_sci_fluxz = 10
+sci_profile = .false.
+n_sci_profile = 10
+sci_pressure = .false.
+n_sci_pressure = 10
+sci_pressure_init = 1
+
+post = .true.
+folder = './output'
+cpfolder = '.'
+srccpfolder = './checkpoint'
+gr_out_file = 'zouHe'
+
+init_cond = 7 
+inv_fluid = 12
+inv_type = -1
+
+fr = 0.7
+fg = 0.7
+fb = 0.6
+fd = 1.0
+fr1 = 0.6
+fr2 = 0.6
+pr = 1E-6
+pg = 0.0
+pb = 0.0
+rock_colour = 0.0
+beta = 1.0
+/
+
+&lbe_input
+SCMP = .false.
+OXFORD = .false.
+amass_b = 1.0
+amass_r = 1.0
+amass_s = 1.0
+tau_b = 1.0
+tau_r = 1.0 
+tau_s = 1.0
+tau_d = 1.0
+bcsel = 0 
+acccoef = 0
+g_br = 0.08
+g_bs = -0.006
+g_ss = 0.003
+d_0 = 1.0
+bdist = 2 
+perturbation = 0
+shear_omega = 0.0
+g_accn = 0.0
+n_checkpoint = 10
+restore_string = 't00000000-0000000000'
+num_chkp_files = 2
+psifunc = 2
+dump_format = 'hdf'
+checkpoint_safe = .true.
+checkpoint_format = 'xdr'
+dump_double = .false.
+n_sanity_check = 10
+shear_u = 0.00
+/
+

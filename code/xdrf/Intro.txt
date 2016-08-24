@@ -1,0 +1,155 @@
+Data Compression
+
+When large systems are simulated over long times, enormous output files of
+Gigabyte sizes are produced. Using a large parallel machine for production
+runs, the output files are generated on this production machine, but they
+are usually further analysed on local computers. These local computers may
+be located at a different site, requiring tape or network transport, and
+they may use different definitions for binary data, rendering the use of
+binary file formats useless. Therefore, although not strictly a matter of
+parallel implementation, a portable data compressions scheme has been
+worked out under EUROPORT project. It is described in more detail below.
+The implementation is of general use for MD and will be made publicly
+available.
+
+
+Portable Data
+
+
+One requirement of EUROPORT is to write portable code that runs
+without modification on various types of parallel platforms.
+Often users work in a heterogeneous environment, running CPU-intensive
+programs on the parallel number-cruncher and doing
+analysis on smaller computers (workstations). This situation
+requires not only portable programs but also data that can be
+exchanged between the various architectures. Binary data is not
+always interpreted the same way; byte ordering of integers varies
+and the floating point format is not fixed either.
+
+The obvious way of porting data from one machine to another is by
+using the ASCII standard and saving the data as a formatted file
+(a file that could be shown on a screen and which represents the data in
+human readable form). However, conversion from binary to ASCII and
+back is very slow, and creates much larger data files as compared
+to binary written data. This is the way GROMOS data is often
+saved when it is run in heterogeneous environments.
+
+It would be better (faster, smaller file size) to have a standard
+way of writing binary data. For programs written in C, such a
+standard exists in practice. XDR (External Data Representation)
+defines a fixed format for exchanging data. It is normally used
+in conjunction with RPC (Remote Procedure Call) routines to
+enable one program to start subprograms on other machines and to
+handle the various data formats. Conversion from the internal
+format to the XDR format is faster than creating and ASCII
+format. For a large class of machines the internal format matches
+closely with XDR format and the extra cost of using XDR is almost
+zero. 
+
+For Fortran programs, no such library exists. However, any
+operating system allows the programmer to call C routines from
+Fortran. This, in general, conflicts with the Europort
+requirement of producing portable code, because the way to call C
+functions from Fortran depends very much on the operating system
+(more precisely on the loader).
+
+This conflict is now resolved by defining a fixed set Fortran XDR
+routines, which can be used to write portable code again. The
+exact implementation of these routines hides the different ways
+of calling C functions. Of course these Fortran routines calling
+the C functions should be portable as well and there is no
+standard way of doing this. 
+
+To achieve the required portability, the Fortran code is generated
+by the standard Unix m4 macroprocessor. Together with some simple
+rules defining each specific computer system, this creates the XDR
+library for Fortran programs. The definitions of the various
+computer systems are the same as used by pvm and it is expected
+that the Fortran XDR routines will run on all platforms where pvm
+runs. In fact because GROMOS uses the pvm system, the XDR
+routines will run on each platform where GROMOS runs. 
+To increase usability, two new routines for opening and closing
+files are added to the C versions of the XDR library. This
+Ensures that the Fortran library and the C library can share the
+same open file.
+
+Compressed Portable Data
+
+A further addition is a routine for writing compressed GROMOS
+coordinates. This routine is added because long runs on a fast
+computer can create gigabytes of data. Having a routine
+specialized in compressing coordinates, results in a much better
+compression ratio than the ratio that could be achieved by
+standard compression programs. Although it turns out that it is
+possible to compress to as low as 25% of the normal binary
+file size, the actual compression used, reaches only about 30%.
+The difference is caused by allowing for random access
+to each frame of coordinates.
+
+With serial access, better compression can be achieved, because
+the coordinates in one frame tend not to differ too much from
+the coordinates in the next frame. Random access cannot exploit
+this  redundancy; it can only use redundancy within a single
+frame of coordinates. This redundancy comes from the limited
+precision of the coordinates, from the limited range of the
+coordinates (all are within a fixed sized simulation box), and
+from the ordering of the atoms that tends to follow the bonds.
+Redundancy could be increased a lot by using the topology
+information, but this makes the routine complicated to use.
+
+The implementation of the routine is best explained starting with
+its function header:
+
+ int xdr3dfcoord(XDR *xdrs, float *fp, int *size, float *precision)
+
+The first argument points to the data structure holding all
+relevant status information relating to the XDR stream (just like
+a file pointer holds the informatation on an open file). The
+second argument is a pointer to an array of floats. This array has
+size * 3 elements, which defines the function of the third
+parameter. The last parameter is a factor used in converting
+floating point numbers to integers. All elements in the array are
+multiplied with this factor and rounded to the nearest integer.
+Only these integer values are written to the XDR file. The
+subroutine compares each set of x,y and z coordinates in the
+array from the previous one, and if the difference turns out to
+be small, it writes only the difference, thereby taking advantage
+of the reduced number of bits needed to store the difference. The
+difference are combined into one big integer, saving even more
+bits. 
+
+// This is best explaned with an example:
+   Suppose dx, dy, dz are all less than 80, then writing these 
+   separatly would require 3 times 7 bits or 21 bits. However
+   the integer created by calculating (dx * 80 + dy) * 80 + dz
+   needs only 19 bits of storage. The mutiplication is special
+   in the sense that, by using division, one can recover the exact
+   values of dx, dy and dz. It is like writing the integer in a
+   base 80 number system
+\\
+
+Even when the difference is not small, compression can be
+achieved, because the routine first finds the minumum and maximum
+values for x, y and z. The coordinates are then written as
+   ( x * maxy + y) * maxz + z
+
+Series of small differences are marked as such and only the
+number of coordinates in such a series is stored in the file, removing the need to
+mark every coordinate as being small or large. In fact only one
+bit is used in the case that the number of small coordinates in
+the new series is the same as in the previous one. This works very
+well for many small molecules like water, where each molecule has
+two small differences and one leading coordinate which id often
+very different from the previous one (because the water molecules
+are in unrelated positions).
+
+There is one more trick used, which is very special for GROMOS
+when using water melocules. GROMOS will first write the position
+of the oxygen, followed by the two hydrogens. However when
+written by first using one hydrogen, then the oxygen followed by
+the other hydrogen, the internal differences are smaller. To take
+advantage of this, the routine will interchange the first and
+second coordinate of each run of small differences.
+
+This set of routines, including documentation, is available on
+request via the Web at URL: http://rugmd4.chem.rug.nl/hoesel/

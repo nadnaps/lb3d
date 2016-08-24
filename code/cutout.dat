@@ -1,0 +1,16 @@
+&cutout_input
+seedfile = 'seed8x8x8fb07.xdr'
+pzero_p = .true.
+seednx = 8
+seedny = 8
+seednz = 8
+seedstartx = 0
+seedstarty = 0
+seedstartz = 0
+seedstopx = 7
+seedstopy = 7
+seedstopz = 7
+putx = 4
+puty = 4
+putz = 4
+/

@@ -1,0 +1,5 @@
+doxygen.completed: Doxyfile.template make-doxygen.sh ../../code/*.f90 ../../code/*.h ../../code/Makefile.template
+	./make-doxygen.sh
+
+clean:
+	rm -rf Doxyfile doxygen-warnings.log doxygen.completed html latex
